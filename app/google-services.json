@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "829371209203",
+    "project_id": "zave-48ec4",
+    "storage_bucket": "zave-48ec4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:829371209203:android:8cc7a8c62e3ee1e231ee86",
+        "android_client_info": {
+          "package_name": "com.example.zave"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBr1eGXmhoRj3qLSW4p8qvSlSSfRrP3bXA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
