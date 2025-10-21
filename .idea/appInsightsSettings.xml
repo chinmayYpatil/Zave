@@ -23,9 +23,9 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.example.zave" />
-                  <option name="mobileSdkAppId" value="1:829371209203:android:8cc7a8c62e3ee1e231ee86" />
-                  <option name="projectId" value="zave-48ec4" />
-                  <option name="projectNumber" value="829371209203" />
+                  <option name="mobileSdkAppId" value="1:955610946355:android:b77f2acbc4361fff6fbc46" />
+                  <option name="projectId" value="zave-5bcdd" />
+                  <option name="projectNumber" value="955610946355" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

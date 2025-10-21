@@ -1,26 +1,44 @@
 {
   "project_info": {
-    "project_number": "829371209203",
-    "project_id": "zave-48ec4",
-    "storage_bucket": "zave-48ec4.firebasestorage.app"
+    "project_number": "955610946355",
+    "project_id": "zave-5bcdd",
+    "storage_bucket": "zave-5bcdd.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:829371209203:android:8cc7a8c62e3ee1e231ee86",
+        "mobilesdk_app_id": "1:955610946355:android:17b07e38322863536fbc46",
         "android_client_info": {
           "package_name": "com.example.zave"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "955610946355-ngs3g5nfeq846c74e1uc0ummgvsrvbv8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.zave",
+            "certificate_hash": "253a02f7c9f7aadaeb0d48a6bf3ce26e65ecd377"
+          }
+        },
+        {
+          "client_id": "955610946355-s04j8etrj6qmv7t95lcfb5a9ta3dn9ot.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyBr1eGXmhoRj3qLSW4p8qvSlSSfRrP3bXA"
+          "current_key": "AIzaSyACcf8X0khH1SoBqiAm-46zg-5owKYKc70"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "955610946355-s04j8etrj6qmv7t95lcfb5a9ta3dn9ot.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

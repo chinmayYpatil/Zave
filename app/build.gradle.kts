@@ -110,6 +110,12 @@ dependencies {
     // Non-BoM dependency (needs explicit version)
     implementation("com.google.android.gms:play-services-auth:21.4.0")
 
+    // Check your dependencies block:
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+
+    implementation("androidx.compose.material:material-icons-extended")
+
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

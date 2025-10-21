@@ -44,6 +44,7 @@ class AuthRepository @Inject constructor(
             Result.success(userEntity.toDomainUser())
 
         } catch (e: Exception) {
+            e.printStackTrace()
             Result.failure(e)
         }
     }

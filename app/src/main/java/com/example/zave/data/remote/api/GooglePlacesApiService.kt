@@ -9,13 +9,13 @@ import retrofit2.http.Query
 //retrofit interface for interacting with the google place api end points
 interface GooglePlacesApiService{
 
-    //for nearbysearch to find stores based on location,radius and keywords
+    //for nearbysearch to find places based on location,radius and keywords
     @GET("maps/api/place/nearbysearch/json")
     suspend fun getNearbyPlaces(
         @Query("location") location: String,
         @Query("radius") radius: Int,
         @Query("keyword") keyword:String,
-        @Query("type") type: String="store",//default store type
+        // REMOVED: @Query("type") type: String="store", // Removing this to broaden the search results
         @Query("key") apikey: String
     ): Response<NearbySearchResponse>
 }
@@ -50,4 +50,3 @@ data class LocationDto(
     @Json(name = "lat") val lat: Double,
     @Json(name = "lng") val lng: Double
 )
-
