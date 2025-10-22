@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.example.zave.data.LocationProvider
 import com.example.zave.data.local.dao.SearchHistoryDao
 import com.example.zave.data.local.dao.UserDao
+import com.example.zave.data.local.dao.PlaceDao
 import com.example.zave.data.local.database.AppDatabase
 import com.example.zave.data.remote.api.GooglePlacesApiService
 import com.example.zave.data.remote.firebase.RemoteConfigService
@@ -37,7 +38,8 @@ object AppModule {
             context,
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
-        ).build()
+        ).fallbackToDestructiveMigration()
+            .build()
     }
 
     //dao for user data
@@ -48,6 +50,10 @@ object AppModule {
     //dao for search history data
     @Provides
     fun provideSearchHistoryDao(db: AppDatabase): SearchHistoryDao = db.searchHistoryDao()
+
+    //dao for place data (NEW)
+    @Provides
+    fun providePlaceDao(db: AppDatabase): PlaceDao = db.placeDao()
 
 
     // --- Firebase & System Providers ---
@@ -94,8 +100,9 @@ object AppModule {
     fun providePlacesRepository(
         placesApiService: GooglePlacesApiService,
         searchHistoryDao: SearchHistoryDao,
+        placeDao: PlaceDao,
         apiKey: String
     ): PlacesRepository {
-        return PlacesRepository(placesApiService, searchHistoryDao, apiKey)
+        return PlacesRepository(placesApiService, searchHistoryDao, placeDao, apiKey)
     }
 }

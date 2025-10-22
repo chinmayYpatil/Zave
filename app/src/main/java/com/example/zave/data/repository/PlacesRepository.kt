@@ -1,10 +1,12 @@
 package com.example.zave.data.repository
 
 import com.example.zave.data.local.dao.SearchHistoryDao
+import com.example.zave.data.local.dao.PlaceDao // ADDED
 import com.example.zave.data.local.models.SearchQueryEntity
 import com.example.zave.data.remote.api.GooglePlacesApiService
 import com.example.zave.data.remote.api.PlaceDto
 import com.example.zave.domain.models.Place
+import com.example.zave.data.local.models.PlaceEntity // ADDED
 import javax.inject.Inject
 import kotlin.math.acos
 import kotlin.math.cos
@@ -15,6 +17,7 @@ import kotlin.math.sin
 class PlacesRepository @Inject constructor(
     private val placesApiService: GooglePlacesApiService,
     private val searchHistoryDao: SearchHistoryDao,
+    private val placeDao: PlaceDao, // ADDED
     private val apiKey: String
 ) {
     private var currentUserLat: Double = 0.0
@@ -49,11 +52,28 @@ class PlacesRepository @Inject constructor(
                     .map { dto -> mapPlaceDtoToDomain(dto) }
                     .sortedBy { it.distanceMeters }
 
+                // Cache successful results
+                val entities = domainPlaces.map { it.toPlaceEntity() }
+                placeDao.updateCache(entities)
+
                 Result.success(domainPlaces)
             } else {
-                Result.failure(Exception("API Error: ${response.code()}"))
+                // FALLBACK 1: API error (e.g., HTTP 4xx/5xx)
+                val cachedPlaces = placeDao.getAllCachedPlaces().map { it.toDomainPlace() }
+                if (cachedPlaces.isNotEmpty()) {
+                    return Result.success(cachedPlaces) // Return cached data on soft failure
+                }
+
+                Result.failure(Exception("API Error: ${response.code()}. No cached results available."))
             }
         } catch (e: Exception) {
+            // FALLBACK 2: Network error (e.g., SocketTimeoutException)
+            e.printStackTrace()
+            val cachedPlaces = placeDao.getAllCachedPlaces().map { it.toDomainPlace() }
+            if (cachedPlaces.isNotEmpty()) {
+                return Result.success(cachedPlaces) // Return cached data on hard failure
+            }
+
             Result.failure(e)
         }
     }
@@ -77,6 +97,20 @@ class PlacesRepository @Inject constructor(
             rating = dto.rating,
             iconUrl = dto.icon,
             distanceMeters = distance
+        )
+    }
+
+    // Helper extension function to map domain model to entity (to save in cache)
+    private fun Place.toPlaceEntity(): PlaceEntity {
+        return PlaceEntity(
+            id = this.id,
+            name = this.name,
+            vicinity = this.vicinity,
+            lat = this.lat,
+            lng = this.lng,
+            rating = this.rating,
+            iconUrl = this.iconUrl,
+            distanceMeters = this.distanceMeters
         )
     }
 
