@@ -96,7 +96,8 @@ class PlacesRepository @Inject constructor(
             lng = placeLng,
             rating = dto.rating,
             iconUrl = dto.icon,
-            distanceMeters = distance
+            distanceMeters = distance,
+            openNow = dto.openingHours?.openNow
         )
     }
 
@@ -110,7 +111,8 @@ class PlacesRepository @Inject constructor(
             lng = this.lng,
             rating = this.rating,
             iconUrl = this.iconUrl,
-            distanceMeters = this.distanceMeters
+            distanceMeters = this.distanceMeters,
+            openNow = this.openNow
         )
     }
 

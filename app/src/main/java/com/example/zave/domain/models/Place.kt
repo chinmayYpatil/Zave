@@ -9,5 +9,6 @@ data class Place(
     val lng:Double,
     val rating: Double?,
     val iconUrl:String?,
-    val distanceMeters: Int?=null//will be calculating in use case
+    val distanceMeters: Int?=null, // will be calculating in use case
+    val openNow: Boolean? = null
 )

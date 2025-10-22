@@ -23,6 +23,14 @@ import com.example.zave.domain.models.Place
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
+import com.example.zave.ui.theme.DarkBackground
+import com.example.zave.ui.theme.TextPrimary
+import com.example.zave.ui.theme.TextSecondary
+import com.example.zave.ui.theme.CardBackground
+import com.example.zave.ui.theme.AccentPink
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight // ADDED
+
 
 @OptIn(ExperimentalMaterial3Api::class) // FIX: OptIn for Scaffold
 @Composable
@@ -38,6 +46,8 @@ fun ResultsScreen(
     var isListView by remember { mutableStateOf(true) }
 
     Scaffold(
+        // Set the main screen background color
+        containerColor = DarkBackground,
         topBar = {
             ResultsAppBar(navController = navController, query = query, isListView = isListView) {
                 isListView = !isListView
@@ -75,18 +85,37 @@ fun ResultsAppBar(navController: NavController, query: String, isListView: Boole
     TopAppBar(
         title = {
             Column {
-                Text(query, style = MaterialTheme.typography.titleMedium)
-                Text("Nearby Stores", style = MaterialTheme.typography.labelSmall)
+                // Set text color for visibility on dark background
+                Text(query, style = MaterialTheme.typography.titleMedium.copy(color = TextPrimary))
+                Text("Nearby Stores", style = MaterialTheme.typography.labelSmall.copy(color = TextPrimary.copy(alpha = 0.7f)))
+
             }
         },
         actions = {
             IconButton(onClick = onToggleView) {
-                Icon(
-                    if (isListView) Icons.Default.Map else Icons.Default.List,
-                    contentDescription = if (isListView) "Show Map" else "Show List"
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(horizontal = 2.dp, vertical = 2.dp)
+                ) {
+                    Icon(
+                        if (isListView) Icons.Default.Map else Icons.Default.List,
+                        contentDescription = if (isListView) "Show Map" else "Show List",
+                        tint = TextPrimary
+                    )
+                    Text(
+                        text = if (isListView) "Map" else "List",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextPrimary
+                    )
+                }
             }
-        }
+        },
+        // Set the TopAppBar background color
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = DarkBackground,
+            navigationIconContentColor = TextPrimary,
+            actionIconContentColor = TextPrimary
+        )
     )
 }
 
@@ -106,11 +135,27 @@ fun PlaceListView(places: List<Place>, onPlaceSelected: (Place) -> Unit) {
 fun StoreCard(place: Place, onClick: () -> Unit) {
     val context = LocalContext.current
 
+    // Determine open status display (MODIFIED)
+    val openStatusText = when (place.openNow) {
+        true -> "Open Now"
+        false -> "Closed"
+        null -> "Status Unknown"
+    }
+
+    // Determine status color (MODIFIED)
+    val statusColor = when (place.openNow) {
+        true -> Color(0xFF4CAF50) // Green for Open
+        false -> AccentPink // AccentPink for Closed (using a defined theme color)
+        null -> TextSecondary // Secondary text color for Unknown
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        // Use CardBackground for the card container
+        colors = CardDefaults.cardColors(containerColor = CardBackground)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -124,25 +169,29 @@ fun StoreCard(place: Place, onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(place.name, style = MaterialTheme.typography.titleMedium)
+                // Set text color for visibility
+                Text(place.name, style = MaterialTheme.typography.titleMedium.copy(color = TextPrimary))
                 Text(
                     "${place.vicinity}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    // Use TextSecondary for less prominent text
+                    color = TextSecondary
                 )
             }
 
             Column(horizontalAlignment = Alignment.End) {
-                val distanceKm = place.distanceMeters?.let { it / 1000.0 }
-                if (distanceKm != null) {
-                    Text(
-                        "${String.format("%.1f", distanceKm)} km",
-                        style = MaterialTheme.typography.labelLarge
+                // CHANGED: Display Open/Closed status instead of distance
+                Text(
+                    openStatusText,
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        color = statusColor,
+                        fontWeight = FontWeight.Bold // Make status bold
                     )
-                }
+                )
+                // Kept rating display
                 Text(
                     "Rating: ${place.rating ?: "N/A"}",
-                    style = MaterialTheme.typography.labelSmall
+                    style = MaterialTheme.typography.labelSmall.copy(color = TextSecondary)
                 )
 
                 // Button to open in Google Maps directly
@@ -193,21 +242,24 @@ fun MapViewComposable(places: List<Place>, selectedPlace: Place?) {
 @Composable
 fun LoadingState() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
+        // Use TextPrimary for the indicator color against dark background
+        CircularProgressIndicator(color = TextPrimary)
     }
 }
 
 @Composable
 fun EmptyState(query: String) {
     Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-        Text("No results found for '$query' within your search radius.", style = MaterialTheme.typography.titleMedium)
+        // Set text color for visibility
+        Text("No results found for '$query' within your search radius.", style = MaterialTheme.typography.titleMedium.copy(color = TextPrimary))
     }
 }
 
 @Composable
 fun ErrorState(message: String) {
     Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-        Text("Error: $message", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.titleMedium)
+        // Use AccentPink for error text in the dark theme
+        Text("Error: $message", color = AccentPink, style = MaterialTheme.typography.titleMedium)
     }
 }
 

@@ -34,7 +34,14 @@ data class PlaceDto(
     @Json(name = "vicinity") val vicinity: String,
     @Json(name = "rating") val rating: Double?,
     @Json(name = "icon") val icon: String?,
-    @Json(name = "geometry") val geometry: GeometryDto
+    @Json(name = "geometry") val geometry: GeometryDto,
+    @Json(name = "opening_hours") val openingHours: OpeningHoursDto?
+)
+
+// DTO for Opening Hours
+@JsonClass(generateAdapter = true)
+data class OpeningHoursDto(
+    @Json(name = "open_now") val openNow: Boolean?
 )
 
 // DTO for geographical coordinates

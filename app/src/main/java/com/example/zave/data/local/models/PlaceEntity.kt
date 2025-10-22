@@ -15,7 +15,8 @@ data class PlaceEntity(
     val rating: Double?,
     val iconUrl: String?,
     val distanceMeters: Int?,
-    val timestamp: Long = System.currentTimeMillis() // To track freshness
+    val timestamp: Long = System.currentTimeMillis(), // To track freshness
+    val openNow: Boolean?
 ) {
     fun toDomainPlace(): com.example.zave.domain.models.Place {
         return com.example.zave.domain.models.Place(
@@ -26,7 +27,8 @@ data class PlaceEntity(
             lng = this.lng,
             rating = this.rating,
             iconUrl = this.iconUrl,
-            distanceMeters = this.distanceMeters
+            distanceMeters = this.distanceMeters,
+            openNow = this.openNow
         )
     }
 }

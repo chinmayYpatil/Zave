@@ -3,12 +3,14 @@ package com.example.zave.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.zave.data.remote.firebase.RemoteConfigService
+import com.example.zave.data.repository.AuthRepository // ADDED
 import com.example.zave.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch // ADDED
 import javax.inject.Inject
 
 // Data class to combine all required settings and debug information
@@ -23,7 +25,8 @@ data class SettingsUiState(
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val remoteConfigService: RemoteConfigService
+    private val remoteConfigService: RemoteConfigService,
+    private val authRepository: AuthRepository // ADDED
 ) : ViewModel() {
 
     // 1. Fetch static Remote Config values for debug purposes
@@ -67,5 +70,14 @@ class SettingsViewModel @Inject constructor(
      */
     fun toggleUseAutoLocation(enabled: Boolean) {
         settingsRepository.setUseAutoLocation(enabled)
+    }
+
+    /**
+     * Signs out the current user and clears local data.
+     */
+    fun signOut() {
+        viewModelScope.launch {
+            authRepository.signOut()
+        }
     }
 }

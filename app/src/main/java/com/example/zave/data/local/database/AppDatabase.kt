@@ -12,7 +12,7 @@ import com.example.zave.data.local.models.PlaceEntity
 //main db class for the application
 @Database(
     entities = [UserEntity::class, SearchQueryEntity::class, PlaceEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
