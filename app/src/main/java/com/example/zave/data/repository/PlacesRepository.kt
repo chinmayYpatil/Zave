@@ -1,12 +1,12 @@
 package com.example.zave.data.repository
 
 import com.example.zave.data.local.dao.SearchHistoryDao
-import com.example.zave.data.local.dao.PlaceDao // ADDED
+import com.example.zave.data.local.dao.PlaceDao  
 import com.example.zave.data.local.models.SearchQueryEntity
 import com.example.zave.data.remote.api.GooglePlacesApiService
 import com.example.zave.data.remote.api.PlaceDto
 import com.example.zave.domain.models.Place
-import com.example.zave.data.local.models.PlaceEntity // ADDED
+import com.example.zave.data.local.models.PlaceEntity  
 import javax.inject.Inject
 import kotlin.math.acos
 import kotlin.math.cos
@@ -17,7 +17,7 @@ import kotlin.math.sin
 class PlacesRepository @Inject constructor(
     private val placesApiService: GooglePlacesApiService,
     private val searchHistoryDao: SearchHistoryDao,
-    private val placeDao: PlaceDao, // ADDED
+    private val placeDao: PlaceDao,  
     private val apiKey: String
 ) {
     private var currentUserLat: Double = 0.0

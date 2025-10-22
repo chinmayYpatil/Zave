@@ -118,7 +118,6 @@ dependencies {
     implementation("androidx.compose.material:material:1.8.3")
 
     // Firebase Firestore (Mandatory for saving stores)
-    // FIX: Explicitly setting version to resolve dependency error caused by BoM not resolving the version correctly.
     implementation("com.google.firebase:firebase-firestore-ktx:25.0.0")
 
     // Kotlinx Coroutines (Used by the await() extension for suspend functions)

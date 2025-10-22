@@ -3,22 +3,19 @@ package com.example.zave.data.remote.firebase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.snapshots
-import kotlinx.coroutines.tasks.await // FIX: Added KTX import for await()
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Service class for handling all Firebase Firestore operations.
- * Saved places are stored in the private user collection:
- * /artifacts/{appId}/users/{userId}/saved_places/{placeId}
- */
+
+ //Service class for handling all Firebase Firestore operations.
 @Singleton
 class FirestoreService @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
-    // FIX: Using a placeholder app ID since the global variable __app_id is unavailable/unresolved
+
     private val appId = "default-zave-app-id"
 
     // Data transfer object for saving a Place's ID in Firestore
@@ -35,10 +32,10 @@ class FirestoreService @Inject constructor(
         val collectionPath = "artifacts/$appId/users/$userId/saved_places"
 
         return firestore.collection(collectionPath)
-            .snapshots() // FIX: resolved by import
+            .snapshots()
             .map { snapshot ->
                 // Map the documents to a Set of Place IDs for efficient lookups
-                snapshot.documents.mapNotNull { it.id }.toSet() // FIX: documents and it.id are correct
+                snapshot.documents.mapNotNull { it.id }.toSet()
             }
     }
 
@@ -52,7 +49,7 @@ class FirestoreService @Inject constructor(
         val dto = SavedPlaceDto(placeId = placeId)
         firestore.document(documentPath)
             .set(dto, SetOptions.merge())
-            .await() // FIX: resolved by import
+            .await()
     }
 
     /**
@@ -63,6 +60,6 @@ class FirestoreService @Inject constructor(
 
         firestore.document(documentPath)
             .delete()
-            .await() // FIX: resolved by import
+            .await()
     }
 }

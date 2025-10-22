@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.zave.data.LocationProvider
 import com.example.zave.data.repository.SettingsRepository
-import com.example.zave.data.repository.SavedPlacesRepository // ADDED
+import com.example.zave.data.repository.SavedPlacesRepository  
 import com.example.zave.domain.models.Place
 import com.example.zave.domain.usecase.GetNearbyPlacesUseCase
 import com.example.zave.ui.common.navigation.Screen
@@ -33,7 +33,7 @@ class ResultsViewModel @Inject constructor(
     private val getNearbyPlacesUseCase: GetNearbyPlacesUseCase,
     private val settingsRepository: SettingsRepository,
     private val locationProvider: LocationProvider,
-    private val savedPlacesRepository: SavedPlacesRepository // ADDED
+    private val savedPlacesRepository: SavedPlacesRepository  
 ) : ViewModel() {
 
     private val query: String = savedStateHandle[Screen.Results.ARG_QUERY] ?: ""

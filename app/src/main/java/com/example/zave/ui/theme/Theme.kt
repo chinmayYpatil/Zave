@@ -9,6 +9,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
@@ -26,6 +27,16 @@ val AccentPurple = Color(0xFF9B59B6)
 val AccentPink = Color(0xFFE91E63)
 val TextPrimary = Color.White
 val TextSecondary = Color(0xFFB0B8C4)
+
+val DarkBlueToBlackGradient = Brush.verticalGradient(
+    colors = listOf(
+        Color(0xFF0A0E27), // Top color - Dark Blue (matching DarkBackground)
+        Color(0xFF000000)  // Bottom color - Black
+    ),
+    startY = 0f,
+    endY = 1500f // Control how quickly it fades to black
+)
+
 
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,

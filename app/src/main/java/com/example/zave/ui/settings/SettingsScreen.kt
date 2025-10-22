@@ -43,10 +43,10 @@ fun SettingsScreen(
                 title = { Text("Settings", color = TextPrimary) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary) // FIX: Set Icon tint
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
                     }
                 },
-                // FIX: Set TopAppBar colors
+
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = DarkBackground,
                     titleContentColor = TextPrimary,
@@ -68,17 +68,15 @@ fun SettingsScreen(
             // 1. Search Radius Setting
             SearchRadiusSetting(uiState = uiState, onRadiusChange = viewModel::setCustomRadius)
 
-            // FIX: Set Divider color
+
             Divider(Modifier.padding(vertical = 16.dp), color = TextSecondary.copy(alpha = 0.3f))
 
-
-            // FIX: Set Divider color
             Divider(Modifier.padding(vertical = 16.dp), color = TextSecondary.copy(alpha = 0.3f))
 
             // 2. Remote Config Debugging Section
             RemoteConfigDebugSection(uiState = uiState)
 
-            Spacer(modifier = Modifier.height(32.dp)) // ADDED Spacer
+            Spacer(modifier = Modifier.height(32.dp))
 
             // 3. Sign Out Button (ADDED)
             SignOutButton(onSignOut = onSignOut)
@@ -114,14 +112,14 @@ fun SearchRadiusSetting(uiState: SettingsUiState, onRadiusChange: (Double) -> Un
 
     Text(
         text = "Search Radius Override",
-        style = MaterialTheme.typography.titleMedium.copy(color = TextPrimary), // FIX: Set Text color
+        style = MaterialTheme.typography.titleMedium.copy(color = TextPrimary),
         modifier = Modifier.padding(bottom = 8.dp)
     )
 
     // Display current and default radius
     Text(
         text = "Current Radius: ${String.format("%.1f", uiState.customRadiusKm)} km (Default: ${uiState.remoteDefaultRadiusKm} km)",
-        style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary), // FIX: Set Text color
+        style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary),
         modifier = Modifier.padding(bottom = 8.dp)
     )
 
@@ -134,7 +132,6 @@ fun SearchRadiusSetting(uiState: SettingsUiState, onRadiusChange: (Double) -> Un
         valueRange = 1f..maxRadius,
         steps = (maxRadius * 10).roundToInt() - 2, // Steps for 0.1 increments
         modifier = Modifier.fillMaxWidth(),
-        // FIX: Set Slider colors to use AccentBlue
         colors = SliderDefaults.colors(
             thumbColor = AccentBlue,
             activeTrackColor = AccentBlue,
@@ -147,13 +144,11 @@ fun SearchRadiusSetting(uiState: SettingsUiState, onRadiusChange: (Double) -> Un
 fun RemoteConfigDebugSection(uiState: SettingsUiState) {
     Text(
         text = "Firebase Remote Config (Debug Info)",
-        style = MaterialTheme.typography.titleMedium.copy(color = TextPrimary), // FIX: Set Text color
-        modifier = Modifier.padding(bottom = 8.dp)
+        style = MaterialTheme.typography.titleMedium.copy(color = TextPrimary),
     )
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        // FIX: Use custom CardBackground color
         colors = CardDefaults.cardColors(containerColor = CardBackground)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -170,13 +165,11 @@ fun DebugText(label: String, value: String) {
         Text(
             text = "$label:",
             style = MaterialTheme.typography.labelLarge,
-            // FIX: Use TextSecondary for the label
             color = TextSecondary,
             modifier = Modifier.width(150.dp)
         )
         Text(
             text = value,
-            // FIX: Use TextPrimary for the value
             style = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary)
         )
     }

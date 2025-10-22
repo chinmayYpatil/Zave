@@ -17,10 +17,8 @@ class RemoteConfigService @Inject constructor() {
         const val DEFAULT_RADIUS_KEY = "default_radius_km"
         const val FEATURED_CATEGORY_KEY = "featured_category"
         const val BANNER_MESSAGE_KEY = "banner_message"
-        // Key for the category list JSON
         const val CATEGORIES_JSON_KEY = "category_cards_json"
-
-        // DEFAULT_CONFIG map is REMOVED.
+        const val NEARBY_OFFERS_JSON_KEY = "nearby_offers_json"
     }
 
     init {
@@ -28,8 +26,6 @@ class RemoteConfigService @Inject constructor() {
             minimumFetchIntervalInSeconds = if (BuildConfig.DEBUG) 0 else 3600
         }
         remoteConfig.setConfigSettingsAsync(configSettings)
-
-        // remoteConfig.setDefaultsAsync is REMOVED.
     }
 
     //Fetches the latest configuration values from Firebase
@@ -62,5 +58,10 @@ class RemoteConfigService @Inject constructor() {
     // Retrieves the categories list as a JSON string. Returns "" if not fetched.
     fun getCategoriesJson(): String {
         return remoteConfig.getString(CATEGORIES_JSON_KEY)
+    }
+
+    // Retrieves the offer list.Returns "" if not fetched.
+    fun getOffersJson(): String {
+        return remoteConfig.getString(NEARBY_OFFERS_JSON_KEY)
     }
 }

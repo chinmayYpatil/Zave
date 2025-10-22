@@ -15,7 +15,6 @@ interface GooglePlacesApiService{
         @Query("location") location: String,
         @Query("radius") radius: Int,
         @Query("keyword") keyword:String,
-        // REMOVED: @Query("type") type: String="store", // Removing this to broaden the search results
         @Query("key") apikey: String
     ): Response<NearbySearchResponse>
 }

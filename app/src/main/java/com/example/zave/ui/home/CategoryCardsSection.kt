@@ -84,7 +84,6 @@ fun CategoryCard(
             .clickable(onClick = onClick),
         // Use simple rounded corner and dark background style
         shape = RoundedCornerShape(12.dp),
-        // FIX: Use the category's color as the container color
         colors = CardDefaults.cardColors(containerColor = category.color.copy(alpha = 0.1f)) // Use a subtle tint of the color
     ) {
         Column(

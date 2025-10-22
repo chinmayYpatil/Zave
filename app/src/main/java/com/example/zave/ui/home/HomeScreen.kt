@@ -33,18 +33,10 @@ import androidx.compose.material.ExperimentalMaterialApi
 import com.example.zave.ui.theme.AccentBlue
 import com.example.zave.ui.theme.AccentPink
 import com.example.zave.ui.theme.DarkBackground
+import com.example.zave.ui.theme.DarkBlueToBlackGradient
 import com.example.zave.ui.theme.TextPrimary
 
 
-// Define the Blue-to-Black Gradient for the background
-private val DarkBlueToBlackGradient = Brush.verticalGradient(
-    colors = listOf(
-        Color(0xFF0A0E27), // Top color - Dark Blue (matching DarkBackground)
-        Color(0xFF000000)  // Bottom color - Black
-    ),
-    startY = 0f,
-    endY = 1500f // Control how quickly it fades to black
-)
 
 // Category Data Model - Kept as is for the UI layer
 data class CategoryItem(
@@ -77,6 +69,7 @@ fun mapKeyToImageVector(key: String): ImageVector {
         "MenuBook" -> Icons.Default.MenuBook
         "FitnessCenter" -> Icons.Default.FitnessCenter
         "Face" -> Icons.Default.Face
+        "LocalOffer" -> Icons.Default.LocalOffer
         else -> Icons.Default.Category // Default icon
     }
 }
@@ -86,7 +79,7 @@ fun RemoteCategory.toCategoryItem(): CategoryItem {
     return CategoryItem(
         name = this.name,
         icon = mapKeyToImageVector(this.key),
-        color = this.color.toComposeColor(AccentBlue) // Use AccentBlue as fallback
+        color = this.color.toComposeColor(AccentBlue)
     )
 }
 
@@ -154,7 +147,6 @@ fun HomeScreen(
                     )
                 },
                 actions = {
-                    // Removed manual refresh button, relying on pull-to-refresh
                     IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
                         Icon(
                             Icons.Default.Settings,
@@ -169,23 +161,19 @@ fun HomeScreen(
             )
         }
     ) { paddingValues ->
-        // Use Box to stack the scrollable content and the refresh indicator
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                // REMOVED: .padding(paddingValues) from here
                 .background(DarkBlueToBlackGradient)
-                .pullRefresh(pullRefreshState) // Apply Pull-to-Refresh Modifier
+                .pullRefresh(pullRefreshState)
         ) {
-            // FIX: Content is always rendered and scrollable for the pullRefresh gesture to work.
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(paddingValues) // <--- ADDED padding here
+                    .padding(paddingValues)
             ) {
-                // Initial load: The sections below will render, providing a scrollable area.
-                // The loading spinner will be shown by the PullRefreshIndicator.
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Search Bar Section
@@ -225,6 +213,18 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
+                // NEARBY OFFERS CAROUSEL
+                if (uiState.nearbyOffers.isNotEmpty()) {
+                    OffersCarousel(
+                        offers = uiState.nearbyOffers,
+                        onOfferClick = { query ->
+                            viewModel.updateQueryInput(query)
+                            onSearch()
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
+
 
                 // Recent Searches (Will be empty initially)
                 if (uiState.recentSearches.isNotEmpty()) {
@@ -259,6 +259,7 @@ fun HomeScreen(
                         viewModel.updateQueryInput(category)
                         onSearch()
                     },
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -271,11 +272,6 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.height(32.dp))
                 }
-
-                // About Section (Always renders, ensuring minimum scroll height)
-                AboutSection(
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
 
                 Spacer(modifier = Modifier.height(80.dp))
             }

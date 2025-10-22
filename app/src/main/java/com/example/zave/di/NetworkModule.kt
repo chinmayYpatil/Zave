@@ -88,11 +88,10 @@ object NetworkModule {
 
         return OkHttpClient.Builder()
             .addInterceptor(logging)
-            // FIX: Add interceptor to inject X-Android-Package, X-Android-Cert, and Referer headers
+
             .addInterceptor { chain ->
                 val requestBuilder = chain.request().newBuilder()
                     .addHeader("X-Android-Package", context.packageName)
-                    // FIX: Added Referer header to resolve the "empty referer" API denial error.
                     .addHeader("Referer", "android-app://${context.packageName}")
 
                 // Only add X-Android-Cert if successfully calculated

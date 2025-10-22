@@ -18,6 +18,8 @@ data class RemoteCategory(
     @Json(name = "color") val color: String? // Hex color string
 )
 
+// Importing the new Offer model
+// import com.example.zave.data.repository.Offer (or define it in this file if preferred, but imported via package/file split)
 
 //repository to manage application settings
 class SettingsRepository @Inject constructor(
@@ -57,6 +59,20 @@ class SettingsRepository @Inject constructor(
         return try {
             val listType = Types.newParameterizedType(List::class.java, RemoteCategory::class.java)
             val adapter = moshi.adapter<List<RemoteCategory>>(listType)
+            adapter.fromJson(jsonString) ?: emptyList()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    fun getNearbyOffers(): List<Offer> {
+        val jsonString = remoteConfigService.getOffersJson()
+
+        return try {
+            val listType = Types.newParameterizedType(List::class.java, Offer::class.java)
+            val adapter = moshi.adapter<List<Offer>>(listType)
+            // Use try-catch for robustness in case of malformed JSON
             adapter.fromJson(jsonString) ?: emptyList()
         } catch (e: Exception) {
             e.printStackTrace()
