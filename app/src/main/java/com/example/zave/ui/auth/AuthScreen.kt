@@ -5,11 +5,13 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background // ADDED IMPORT
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color // ADDED IMPORT
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -18,6 +20,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.zave.R
 import com.example.zave.ui.common.navigation.Screen
+import com.example.zave.ui.theme.DarkBackground // ADDED IMPORT
+import com.example.zave.ui.theme.TextPrimary // ADDED IMPORT
+import com.example.zave.ui.theme.TextSecondary // ADDED IMPORT
+import com.example.zave.ui.theme.AccentBlue // ADDED IMPORT
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -60,7 +66,6 @@ fun AuthScreen(
                 val account = task.getResult(ApiException::class.java)!!
                 viewModel.signInWithGoogle(account)
             } catch (e: ApiException) {
-                // FIX 3: Removed the illegal call viewModel.signInWithGoogle(null)
                 // The VM expects a non-null account. For API failure, we reset state/show error.
                 Toast.makeText(context, "Sign-in failed: ${e.message}", Toast.LENGTH_LONG).show()
                 viewModel.clearError()
@@ -75,6 +80,8 @@ fun AuthScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            // FIX: Set background color using custom DarkBackground
+            .background(DarkBackground)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -83,30 +90,41 @@ fun AuthScreen(
         Image(
             painter = painterResource(id = R.drawable.ic_launcher_foreground),
             contentDescription = "App Logo",
+            // NOTE: The launcher foreground image is usually white/transparent,
+            // so we rely on the dark background for contrast.
             modifier = Modifier.size(120.dp).padding(bottom = 32.dp)
         )
 
         Text(
             text = "Welcome to Shopper's Compass",
-            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary // FIX: Use TextPrimary
+            ),
             modifier = Modifier.padding(bottom = 8.dp)
         )
         Text(
             text = "Sign in to discover local deals and stores.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            // FIX: Use TextSecondary for descriptive text
+            color = TextSecondary,
             modifier = Modifier.padding(bottom = 48.dp)
         )
 
         when (uiState) {
             is AuthUiState.Loading -> {
-                CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier.padding(16.dp),
+                    color = AccentBlue // FIX: Use AccentBlue for the loading indicator
+                )
             }
             else -> {
                 Button(
                     onClick = { signInLauncher.launch(googleSignInClient.signInIntent) },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
-                    enabled = uiState !is AuthUiState.Loading
+                    enabled = uiState !is AuthUiState.Loading,
+                    // FIX: Use AccentBlue for the main action button
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
                 ) {
                     Text("Sign in with Gmail")
                 }
