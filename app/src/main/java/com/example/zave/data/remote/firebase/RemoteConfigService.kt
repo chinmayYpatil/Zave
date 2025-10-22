@@ -17,12 +17,10 @@ class RemoteConfigService @Inject constructor() {
         const val DEFAULT_RADIUS_KEY = "default_radius_km"
         const val FEATURED_CATEGORY_KEY = "featured_category"
         const val BANNER_MESSAGE_KEY = "banner_message"
+        // Key for the category list JSON
+        const val CATEGORIES_JSON_KEY = "category_cards_json"
 
-        val DEFAULT_CONFIG = mapOf(
-            DEFAULT_RADIUS_KEY to 5.0,
-            FEATURED_CATEGORY_KEY to "clothing",
-            BANNER_MESSAGE_KEY to "Welcome! Discover stores near you."
-        )
+        // DEFAULT_CONFIG map is REMOVED.
     }
 
     init {
@@ -31,7 +29,7 @@ class RemoteConfigService @Inject constructor() {
         }
         remoteConfig.setConfigSettingsAsync(configSettings)
 
-        remoteConfig.setDefaultsAsync(DEFAULT_CONFIG)
+        // remoteConfig.setDefaultsAsync is REMOVED.
     }
 
     //Fetches the latest configuration values from Firebase
@@ -44,20 +42,25 @@ class RemoteConfigService @Inject constructor() {
     }
 
 
-    //Retrieves the default search radius in km
+    //Retrieves the default search radius in km. Returns 0.0 if not fetched.
     fun getDefaultRadiusKm(): Double {
         return remoteConfig.getDouble(DEFAULT_RADIUS_KEY)
     }
 
 
-    //Retrieves the featured search category string
+    //Retrieves the featured search category string. Returns "" if not fetched.
     fun getFeaturedCategory(): String {
         return remoteConfig.getString(FEATURED_CATEGORY_KEY)
     }
 
 
-    //Retrieves the banner message text
+    //Retrieves the banner message text. Returns "" if not fetched.
     fun getBannerMessage(): String {
         return remoteConfig.getString(BANNER_MESSAGE_KEY)
+    }
+
+    // Retrieves the categories list as a JSON string. Returns "" if not fetched.
+    fun getCategoriesJson(): String {
+        return remoteConfig.getString(CATEGORIES_JSON_KEY)
     }
 }

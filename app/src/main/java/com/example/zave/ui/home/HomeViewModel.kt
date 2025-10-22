@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.zave.data.LocationProvider
 import com.example.zave.data.local.dao.SearchHistoryDao
 import com.example.zave.data.repository.SettingsRepository
+import com.example.zave.data.repository.RemoteCategory // Import RemoteCategory
 import com.example.zave.domain.models.SearchHistoryItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,8 +22,9 @@ data class HomeUiState(
     val featuredCategory: String = "",
     val searchInput: String = "",
     val recentSearches: List<SearchHistoryItem> = emptyList(),
+    val categoryItems: List<RemoteCategory> = emptyList(), // NEW: Holds remote categories
     val currentLocation: Location? = null,
-    val isLoading: Boolean = true,
+    val isLoading: Boolean = true, // Set to true initially
     val requiresLocationPermission: Boolean = false,
     val error: String? = null
 )
@@ -34,7 +36,7 @@ class HomeViewModel @Inject constructor(
     private val locationProvider: LocationProvider
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HomeUiState())
+    private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     // Flow to hold the user's search query input from the TextField
@@ -44,15 +46,11 @@ class HomeViewModel @Inject constructor(
     init {
         // Start background tasks immediately
         viewModelScope.launch {
-            // 1. Initialize settings (fetches remote config)
-            settingsRepository.initialize()
-
-            // 2. Collect remote config and search history updates
+            // 1. Collect remote config and search history updates
             collectRemoteConfigAndHistory()
-
-            // 3. Attempt to get location (permission must be requested in Activity)
-            //    We will call requestLocation() later once permission is confirmed
         }
+        // 2. Start initial data fetch/refresh
+        refreshData()
     }
 
     /**
@@ -69,14 +67,38 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Sets the initial remote config values after fetch is complete.
+     * Central function to fetch location and update remote config.
+     * Called on initial load and pull-to-refresh.
      */
-    fun setRemoteConfigInitialValues() {
+    fun refreshData() = viewModelScope.launch {
+        // Start loading
+        _uiState.update { it.copy(isLoading = true, error = null) }
+
+        // 1. Fetch remote config
+        val remoteConfigSuccess = settingsRepository.initialize()
+
+        // 2. Update UI state with remote config values regardless of success (to use cached values if fetch fails)
+        updateRemoteConfigValues()
+
+        if (!remoteConfigSuccess) {
+            // Log or handle failure to fetch/activate remote config if needed
+        }
+
+        // 3. Request current location
+        requestLocation() // This will update isLoading back to false when complete
+    }
+
+    /**
+     * Updates the UI state with the current values from the SettingsRepository
+     * (which reflects the latest remote config values, even if cached/default).
+     */
+    private fun updateRemoteConfigValues() {
         _uiState.update {
             it.copy(
                 bannerMessage = settingsRepository.getBannerMessage(),
                 featuredCategory = settingsRepository.getFeaturedCategory(),
-                isLoading = false
+                categoryItems = settingsRepository.getCategoryItems(),
+                // Keep isLoading true until location is fetched
             )
         }
     }
@@ -92,7 +114,7 @@ class HomeViewModel @Inject constructor(
      * Attempts to fetch the user's location. Should only be called AFTER permission is granted.
      */
     fun requestLocation() = viewModelScope.launch {
-        _uiState.update { it.copy(isLoading = true) }
+        _uiState.update { it.copy(error = null) }
 
         val location = locationProvider.getCurrentLocation()
 
@@ -129,6 +151,7 @@ class HomeViewModel @Inject constructor(
      */
     fun getEffectiveSearchQuery(): String {
         val input = _queryInput.value.trim()
+        // If input is empty, use the single item from remote config
         return if (input.isNotEmpty()) input else uiState.value.featuredCategory
     }
 }

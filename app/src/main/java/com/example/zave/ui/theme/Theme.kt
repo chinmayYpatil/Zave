@@ -9,6 +9,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
@@ -16,6 +17,15 @@ private val DarkColorScheme = darkColorScheme(
     secondary = PurpleGrey80,
     tertiary = Pink80
 )
+
+// Dark Theme Colors
+val DarkBackground = Color(0xFF0A0E27)
+val CardBackground = Color(0xFF1A1F3A)
+val AccentBlue = Color(0xFF4A90E2)
+val AccentPurple = Color(0xFF9B59B6)
+val AccentPink = Color(0xFFE91E63)
+val TextPrimary = Color.White
+val TextSecondary = Color(0xFFB0B8C4)
 
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,

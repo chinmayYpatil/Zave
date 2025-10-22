@@ -115,6 +115,8 @@ dependencies {
 
     implementation("androidx.compose.material:material-icons-extended")
 
+    implementation("androidx.compose.material:material:1.8.3")
+
 
     // Testing
     testImplementation(libs.junit)

@@ -2,31 +2,95 @@ package com.example.zave.ui.home
 
 import android.Manifest
 import android.location.Location
-import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.* // FIX: Add wildcard import for Icons.Default.*
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.zave.ui.common.navigation.Screen
+import com.example.zave.data.repository.RemoteCategory
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material.ExperimentalMaterialApi
+import com.example.zave.ui.theme.AccentBlue
+import com.example.zave.ui.theme.AccentPink
+import com.example.zave.ui.theme.DarkBackground
+import com.example.zave.ui.theme.TextPrimary
 
-@OptIn(ExperimentalMaterial3Api::class) // FIX: OptIn for experimental Material 3 APIs
+
+// Define the Blue-to-Black Gradient for the background
+private val DarkBlueToBlackGradient = Brush.verticalGradient(
+    colors = listOf(
+        Color(0xFF0A0E27), // Top color - Dark Blue (matching DarkBackground)
+        Color(0xFF000000)  // Bottom color - Black
+    ),
+    startY = 0f,
+    endY = 1500f // Control how quickly it fades to black
+)
+
+// Category Data Model - Kept as is for the UI layer
+data class CategoryItem(
+    val name: String,
+    val icon: ImageVector,
+    val color: Color
+)
+
+// Extension function to safely convert a hex string to a Compose Color
+fun String?.toComposeColor(default: Color): Color {
+    return try {
+        this?.removePrefix("0x")?.removePrefix("0X")?.toLong(16)?.let { colorLong ->
+            // If the parsed long is an RGB value (less than 0x1000000), prepend 0xFF for full opacity.
+            val finalColorLong = if (colorLong < 0x1000000) (colorLong or 0xFF000000) else colorLong
+            Color(finalColorLong)
+        } ?: default
+    } catch (e: Exception) {
+        default
+    }
+}
+
+// Helper to map a string key to a Material Icon ImageVector
+fun mapKeyToImageVector(key: String): ImageVector {
+    return when (key) {
+        "Laptop" -> Icons.Default.Laptop
+        "Smartphone" -> Icons.Default.Smartphone
+        "Checkroom" -> Icons.Default.Checkroom
+        "ShoppingCart" -> Icons.Default.ShoppingCart
+        "Home" -> Icons.Default.Home
+        "MenuBook" -> Icons.Default.MenuBook
+        "FitnessCenter" -> Icons.Default.FitnessCenter
+        "Face" -> Icons.Default.Face
+        else -> Icons.Default.Category // Default icon
+    }
+}
+
+// Helper function to convert the RemoteCategory to the UI's CategoryItem
+fun RemoteCategory.toCategoryItem(): CategoryItem {
+    return CategoryItem(
+        name = this.name,
+        icon = mapKeyToImageVector(this.key),
+        color = this.color.toComposeColor(AccentBlue) // Use AccentBlue as fallback
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
@@ -37,26 +101,17 @@ fun HomeScreen(
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
 
-    // Initialize Remote Config values on first composition
-    LaunchedEffect(Unit) {
-        viewModel.setRemoteConfigInitialValues()
-    }
-
-    // --- Location Permission Handling ---
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
             permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true) {
-            // Permission granted, request location
             viewModel.requestLocation()
         } else {
-            // Permission denied
             viewModel.setPermissionRequired(true)
         }
     }
 
-    // Effect to trigger permission request when needed
     LaunchedEffect(uiState.requiresLocationPermission) {
         if (!uiState.currentLocation.isReady() && !uiState.requiresLocationPermission) {
             locationPermissionLauncher.launch(
@@ -68,154 +123,174 @@ fun HomeScreen(
         }
     }
 
-    // --- Search Trigger ---
     val onSearch = {
         val query = viewModel.getEffectiveSearchQuery()
         focusManager.clearFocus()
         if (uiState.currentLocation.isReady()) {
             navController.navigate(Screen.Results.createRoute(query))
         } else {
-            // If location is missing, re-request it or show warning
             viewModel.requestLocation()
-            Toast.makeText(context, "Location required. Trying to fetch...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Location required", Toast.LENGTH_SHORT).show()
         }
     }
+
+    // Setup Pull-to-Refresh State
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = uiState.isLoading,
+        onRefresh = viewModel::refreshData
+    )
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
-            HomeAppBar(navController = navController)
-        },
-        modifier = Modifier.fillMaxSize()
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-        ) {
-            // 1. Remote Config Banner
-            RemoteConfigBanner(message = uiState.bannerMessage)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 2. Search Bar
-            OutlinedTextField(
-                value = queryInput,
-                onValueChange = viewModel::updateQueryInput,
-                label = { Text("Search product or brand (e.g., ${uiState.featuredCategory})") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { onSearch() }),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // 3. Location Status and Error
-            LocationStatusView(uiState = uiState, onPermissionRequest = {
-                locationPermissionLauncher.launch(
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
-                )
-            })
-
-            // 4. Recent Searches
-            if (uiState.recentSearches.isNotEmpty()) {
-                Text(
-                    text = "Recent Searches",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(uiState.recentSearches.take(3)) { item ->
-                        InputChip(
-                            selected = false,
-                            onClick = {
-                                viewModel.updateQueryInput(item.query)
-                                onSearch()
-                            },
-                            label = { Text(item.query) }
+            TopAppBar(
+                title = {
+                    Text(
+                        "Zave",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                },
+                actions = {
+                    // Removed manual refresh button, relying on pull-to-refresh
+                    IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = TextPrimary
                         )
                     }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DarkBackground
+                )
+            )
+        }
+    ) { paddingValues ->
+        // Use Box to stack the scrollable content and the refresh indicator
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                // REMOVED: .padding(paddingValues) from here
+                .background(DarkBlueToBlackGradient)
+                .pullRefresh(pullRefreshState) // Apply Pull-to-Refresh Modifier
+        ) {
+            // FIX: Content is always rendered and scrollable for the pullRefresh gesture to work.
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(paddingValues) // <--- ADDED padding here
+            ) {
+                // Initial load: The sections below will render, providing a scrollable area.
+                // The loading spinner will be shown by the PullRefreshIndicator.
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Search Bar Section
+                SearchSection(
+                    queryInput = queryInput,
+                    onQueryChange = viewModel::updateQueryInput,
+                    onSearch = onSearch,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Location Status
+                if (!uiState.currentLocation.isReady() || uiState.requiresLocationPermission) {
+                    LocationStatusCard(
+                        uiState = uiState,
+                        onPermissionRequest = {
+                            locationPermissionLauncher.launch(
+                                arrayOf(
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION
+                                )
+                            )
+                        },
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
+
+                // Error Message
+                if (uiState.error != null) {
+                    Text(
+                        text = uiState.error!!,
+                        color = AccentPink,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+
+                // Recent Searches (Will be empty initially)
+                if (uiState.recentSearches.isNotEmpty()) {
+                    RecentSearchesSection(
+                        searches = uiState.recentSearches,
+                        onSearchClick = { query ->
+                            viewModel.updateQueryInput(query)
+                            onSearch()
+                        },
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
+
+                // Featured Category Banner (Will be empty initially if config not loaded)
+                if (uiState.featuredCategory.isNotEmpty()) {
+                    FeaturedCategoryBanner(
+                        category = uiState.featuredCategory,
+                        onClick = {
+                            viewModel.updateQueryInput(uiState.featuredCategory)
+                            onSearch()
+                        },
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
+
+                // Category Cards Section (Will be empty initially)
+                CategoryCardsSection(
+                    remoteCategories = uiState.categoryItems,
+                    onCategoryClick = { category ->
+                        viewModel.updateQueryInput(category)
+                        onSearch()
+                    },
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Banner Message (Will be empty initially)
+                if (uiState.bannerMessage.isNotEmpty()) {
+                    BannerCard(
+                        message = uiState.bannerMessage,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
+
+                // About Section (Always renders, ensuring minimum scroll height)
+                AboutSection(
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                Spacer(modifier = Modifier.height(80.dp))
             }
-        }
-    }
-}
 
-// --- Helper Composable Functions ---
-
-@OptIn(ExperimentalMaterial3Api::class) // FIX: OptIn for TopAppBar
-@Composable
-fun HomeAppBar(navController: NavController) {
-    TopAppBar(
-        title = { Text("Shopper's Compass") },
-        actions = {
-            IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
-                Icon(Icons.Default.Settings, contentDescription = "Settings")
-            }
-        }
-    )
-}
-
-@Composable
-fun RemoteConfigBanner(message: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-    ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            modifier = Modifier.padding(12.dp)
-        )
-    }
-}
-
-@Composable
-fun LocationStatusView(uiState: HomeUiState, onPermissionRequest: () -> Unit) {
-    if (uiState.isLoading) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            CircularProgressIndicator(Modifier.size(20.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("Initializing app configuration...")
-        }
-    } else if (uiState.requiresLocationPermission) {
-        Card(
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onPermissionRequest),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
-        ) {
-            Text(
-                "Location permission denied. Tap to grant access.",
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.padding(12.dp)
+            // Pull-to-Refresh Indicator is overlaid on top
+            PullRefreshIndicator(
+                refreshing = uiState.isLoading,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                contentColor = AccentBlue
             )
         }
-    } else if (uiState.error != null || !uiState.currentLocation.isReady()) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
-        ) {
-            Text(
-                uiState.error ?: "Location required for search. Check GPS.",
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.padding(12.dp)
-            )
-        }
-    } else {
-        Text(
-            "Location: Ready (${String.format("%.2f", uiState.currentLocation!!.latitude)}, ...)",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }
-
-// Extension to check location readiness
+// Extension function
 fun Location?.isReady(): Boolean {
-    // Check if the location object is non-null and has valid coordinates (beyond 0,0)
     return this != null && (this.latitude != 0.0 || this.longitude != 0.0)
 }

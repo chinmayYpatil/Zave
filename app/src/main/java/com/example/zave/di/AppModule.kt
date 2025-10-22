@@ -14,6 +14,7 @@ import com.example.zave.data.repository.PlacesRepository
 import com.example.zave.data.repository.SettingsRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.squareup.moshi.Moshi // IMPORT MOSHI
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -88,9 +89,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideSettingsRepository(
-        remoteConfigService: RemoteConfigService
+        remoteConfigService: RemoteConfigService,
+        moshi: Moshi // Inject Moshi
     ): SettingsRepository {
-        return SettingsRepository(remoteConfigService)
+        return SettingsRepository(remoteConfigService, moshi)
     }
 
 
