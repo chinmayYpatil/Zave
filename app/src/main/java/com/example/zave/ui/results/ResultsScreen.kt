@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.* // FIX: Wildcard import added
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder // ADDED IMPORTS
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,11 +30,12 @@ import com.example.zave.ui.theme.TextPrimary
 import com.example.zave.ui.theme.TextSecondary
 import com.example.zave.ui.theme.CardBackground
 import com.example.zave.ui.theme.AccentPink
+import com.example.zave.ui.theme.AccentBlue // ADDED IMPORT
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight // ADDED
+import androidx.compose.ui.text.font.FontWeight
 
 
-@OptIn(ExperimentalMaterial3Api::class) // FIX: OptIn for Scaffold
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultsScreen(
     navController: NavController,
@@ -41,6 +44,8 @@ fun ResultsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val selectedPlace by viewModel.selectedPlace.collectAsState()
+    // ADDED: Collect the set of saved place IDs from the ViewModel
+    val savedPlaceIds by viewModel.savedPlaceIds.collectAsState()
 
     // State to toggle between List (true) and Map (false) view
     var isListView by remember { mutableStateOf(true) }
@@ -67,7 +72,12 @@ fun ResultsScreen(
                     val places = (uiState as ResultsUiState.Success).places
 
                     if (isListView) {
-                        PlaceListView(places, viewModel::selectPlace)
+                        PlaceListView(
+                            places = places,
+                            savedPlaceIds = savedPlaceIds, // PASS SAVED IDs
+                            onPlaceSelected = viewModel::selectPlace,
+                            onToggleFavorite = viewModel::toggleSavedStatus // PASS TOGGLE ACTION
+                        )
                     } else {
                         MapViewComposable(places = places, selectedPlace = selectedPlace)
                     }
@@ -79,7 +89,7 @@ fun ResultsScreen(
 
 // --- Helper Composables ---
 
-@OptIn(ExperimentalMaterial3Api::class) // FIX: OptIn for TopAppBar
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultsAppBar(navController: NavController, query: String, isListView: Boolean, onToggleView: () -> Unit) {
     TopAppBar(
@@ -120,19 +130,35 @@ fun ResultsAppBar(navController: NavController, query: String, isListView: Boole
 }
 
 @Composable
-fun PlaceListView(places: List<Place>, onPlaceSelected: (Place) -> Unit) {
+fun PlaceListView(
+    places: List<Place>,
+    savedPlaceIds: Set<String>, // ADDED PARAMETER
+    onPlaceSelected: (Place) -> Unit,
+    onToggleFavorite: (Place) -> Unit // ADDED PARAMETER
+) {
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(places) { place ->
-            StoreCard(place = place, onClick = { onPlaceSelected(place) })
+            val isSaved = savedPlaceIds.contains(place.id) // CHECK SAVED STATUS
+            StoreCard(
+                place = place,
+                isSaved = isSaved, // PASS STATUS
+                onClick = { onPlaceSelected(place) },
+                onToggleFavorite = { onToggleFavorite(place) } // PASS TOGGLE ACTION
+            )
         }
     }
 }
 
 @Composable
-fun StoreCard(place: Place, onClick: () -> Unit) {
+fun StoreCard(
+    place: Place,
+    isSaved: Boolean, // ADDED PARAMETER
+    onClick: () -> Unit,
+    onToggleFavorite: () -> Unit // ADDED PARAMETER
+) {
     val context = LocalContext.current
 
     // Determine open status display (MODIFIED)
@@ -161,44 +187,71 @@ fun StoreCard(place: Place, onClick: () -> Unit) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = place.iconUrl,
-                contentDescription = "${place.name} icon",
-                modifier = Modifier.size(48.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                // Set text color for visibility
-                Text(place.name, style = MaterialTheme.typography.titleMedium.copy(color = TextPrimary))
-                Text(
-                    "${place.vicinity}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    // Use TextSecondary for less prominent text
-                    color = TextSecondary
+            // Left Column: Icon and Place Info
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AsyncImage(
+                    model = place.iconUrl,
+                    contentDescription = "${place.name} icon",
+                    modifier = Modifier.size(48.dp)
                 )
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    // Set text color for visibility
+                    Text(place.name, style = MaterialTheme.typography.titleMedium.copy(color = TextPrimary))
+                    Text(
+                        "${place.vicinity}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        // Use TextSecondary for less prominent text
+                        color = TextSecondary
+                    )
+                }
             }
 
+
+            // Right Column: Status, Rating, Directions, and Favorite Button
             Column(horizontalAlignment = Alignment.End) {
-                // CHANGED: Display Open/Closed status instead of distance
-                Text(
-                    openStatusText,
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        color = statusColor,
-                        fontWeight = FontWeight.Bold // Make status bold
-                    )
-                )
-                // Kept rating display
-                Text(
-                    "Rating: ${place.rating ?: "N/A"}",
-                    style = MaterialTheme.typography.labelSmall.copy(color = TextSecondary)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Favorite Toggle Button (ADDED)
+                    IconButton(
+                        onClick = onToggleFavorite,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isSaved) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            contentDescription = if (isSaved) "Unsave" else "Save",
+                            tint = if (isSaved) AccentPink else TextSecondary.copy(alpha = 0.7f) // Use AccentPink for saved
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        // Display Open/Closed status
+                        Text(
+                            openStatusText,
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                color = statusColor,
+                                fontWeight = FontWeight.Bold // Make status bold
+                            )
+                        )
+                        // Kept rating display
+                        Text(
+                            "Rating: ${place.rating ?: "N/A"}",
+                            style = MaterialTheme.typography.labelSmall.copy(color = TextSecondary)
+                        )
+                    }
+                }
 
                 // Button to open in Google Maps directly
                 Button(
                     onClick = { openGoogleMaps(context, place.lat, place.lng, place.name) },
                     modifier = Modifier.padding(top = 4.dp),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentBlue) // Use AccentBlue for primary action
                 ) {
                     Text("Directions", style = MaterialTheme.typography.labelSmall)
                 }
@@ -242,8 +295,8 @@ fun MapViewComposable(places: List<Place>, selectedPlace: Place?) {
 @Composable
 fun LoadingState() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        // Use TextPrimary for the indicator color against dark background
-        CircularProgressIndicator(color = TextPrimary)
+        // Use AccentBlue for the indicator color against dark background
+        CircularProgressIndicator(color = AccentBlue)
     }
 }
 

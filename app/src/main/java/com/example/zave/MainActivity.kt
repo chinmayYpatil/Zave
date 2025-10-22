@@ -72,8 +72,6 @@ fun AppNavigation(authRepository: AuthRepository) {
         // 3. Search Results Screen (requires argument)
         composable(
             route = Screen.Results.route
-            // Arguments will be defined here (e.g., navArgument(Screen.Results.ARG_QUERY) {})
-            // We'll keep it simple for now and rely on string path.
         ) { backStackEntry ->
             val query = backStackEntry.arguments?.getString(Screen.Results.ARG_QUERY) ?: ""
             ResultsScreen(navController = navController, query = query)
@@ -83,7 +81,5 @@ fun AppNavigation(authRepository: AuthRepository) {
         composable(Screen.Settings.route) {
             SettingsScreen(navController = navController)
         }
-
-        // Note: The Greeting function is now removed as it is replaced by the NavHost.
     }
 }

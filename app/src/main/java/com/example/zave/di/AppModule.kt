@@ -9,12 +9,17 @@ import com.example.zave.data.local.dao.PlaceDao
 import com.example.zave.data.local.database.AppDatabase
 import com.example.zave.data.remote.api.GooglePlacesApiService
 import com.example.zave.data.remote.firebase.RemoteConfigService
+import com.example.zave.data.remote.firebase.FirestoreService // ADDED
 import com.example.zave.data.repository.AuthRepository
 import com.example.zave.data.repository.PlacesRepository
 import com.example.zave.data.repository.SettingsRepository
+import com.example.zave.data.repository.SavedPlacesRepository // ADDED
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
-import com.squareup.moshi.Moshi // IMPORT MOSHI
+import com.google.firebase.firestore.FirebaseFirestore // ADDED
+import com.google.firebase.firestore.firestore
+import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -65,6 +70,11 @@ object AppModule {
     @Singleton
     fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
 
+    //firebase firestore instance (ADDED)
+    @Provides
+    @Singleton
+    fun provideFirebaseFirestore(): FirebaseFirestore = Firebase.firestore
+
 
     //firebase remote config instance
     @Provides
@@ -84,7 +94,6 @@ object AppModule {
         return AuthRepository(auth, userDao)
     }
 
-
     //settingsRepository
     @Provides
     @Singleton
@@ -94,7 +103,6 @@ object AppModule {
     ): SettingsRepository {
         return SettingsRepository(remoteConfigService, moshi)
     }
-
 
     //placerepository
     @Provides
@@ -106,5 +114,15 @@ object AppModule {
         apiKey: String
     ): PlacesRepository {
         return PlacesRepository(placesApiService, searchHistoryDao, placeDao, apiKey)
+    }
+
+    // SavedPlacesRepository (ADDED)
+    @Provides
+    @Singleton
+    fun provideSavedPlacesRepository(
+        firestoreService: FirestoreService,
+        authRepository: AuthRepository
+    ): SavedPlacesRepository {
+        return SavedPlacesRepository(firestoreService, authRepository)
     }
 }

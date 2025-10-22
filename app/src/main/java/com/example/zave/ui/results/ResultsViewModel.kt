@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.zave.data.LocationProvider
 import com.example.zave.data.repository.SettingsRepository
+import com.example.zave.data.repository.SavedPlacesRepository // ADDED
 import com.example.zave.domain.models.Place
 import com.example.zave.domain.usecase.GetNearbyPlacesUseCase
 import com.example.zave.ui.common.navigation.Screen
@@ -12,6 +13,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -29,7 +32,8 @@ class ResultsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getNearbyPlacesUseCase: GetNearbyPlacesUseCase,
     private val settingsRepository: SettingsRepository,
-    private val locationProvider: LocationProvider
+    private val locationProvider: LocationProvider,
+    private val savedPlacesRepository: SavedPlacesRepository // ADDED
 ) : ViewModel() {
 
     private val query: String = savedStateHandle[Screen.Results.ARG_QUERY] ?: ""
@@ -39,6 +43,14 @@ class ResultsViewModel @Inject constructor(
 
     private val _selectedPlace = MutableStateFlow<Place?>(null)
     val selectedPlace: StateFlow<Place?> = _selectedPlace.asStateFlow()
+
+    // Flow that holds the set of IDs for all saved places (ADDED)
+    val savedPlaceIds: StateFlow<Set<String>> = savedPlacesRepository.savedPlaceIds
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptySet()
+        )
 
     init {
         // Execute the search immediately when the ViewModel is created
@@ -80,5 +92,13 @@ class ResultsViewModel @Inject constructor(
 
     fun selectPlace(place: Place?) {
         _selectedPlace.value = place
+    }
+
+    /**
+     * Toggles the saved status of a place using the repository. (ADDED)
+     */
+    fun toggleSavedStatus(place: Place) = viewModelScope.launch {
+        val isCurrentlySaved = savedPlaceIds.value.contains(place.id)
+        savedPlacesRepository.toggleSavedStatus(place, isCurrentlySaved)
     }
 }
