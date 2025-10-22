@@ -94,7 +94,7 @@ fun AuthScreen(
         )
 
         Text(
-            text = "Welcome to Shopper's Compass",
+            text = "Welcome to Zave",
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
